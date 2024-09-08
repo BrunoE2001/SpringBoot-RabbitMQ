@@ -1,9 +1,14 @@
 package com.capitannemo.rabbitmq.config;
 
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,11 +28,17 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.name}")
     private String queue;
 
+    @Value("${rabbitmq.queue.json.name}")
+    private String jsonQueue;
+
     @Value("${rabbitmq.exchange.name}")
     private String exchange;
 
     @Value("${rabbitmq.routing.key}")
-    private String routing_key;
+    private String routingKey;
+
+    @Value("${rabbitmq.routing.json.key}")
+    private String routingJsonkey;
 
     /**
      * Creates a RabbitMQ queue bean with the name specified in the 'rabbitmq.queue.name' property.
@@ -36,6 +47,16 @@ public class RabbitMQConfig {
     @Bean
     public Queue queue() {
         return new Queue(queue);
+    }
+
+    /**
+     * Creates a RabbitMQ queue bean with the name specified in the 'rabbitmq.queue.json.name' property.
+     * Spring bean for queue (store json messages)
+     * @return a RabbitMQ queue bean
+     */
+    @Bean
+    public Queue jsonQueue() {
+        return new Queue(jsonQueue);
     }
 
     /**
@@ -55,10 +76,44 @@ public class RabbitMQConfig {
     public Binding binding() {
         return BindingBuilder.bind(queue())
                 .to(exchange())
-                .with(routing_key);
+                .with(routingKey);
     }
 
-    // ConnectionFactory
-    // RabbitTemplate
+    /**
+     * Binds the queue to the exchange using the routing key specified in the 'rabbitmq.routing.json.key' property.
+     * Binding between json queue and exchanges routing key
+     * @return a RabbitMQ binding bean
+     */
+    @Bean
+    public Binding jsonBinding() {
+        return BindingBuilder
+                .bind(jsonQueue())
+                .to(exchange())
+                .with(routingJsonkey);
+    }
+
+    /***
+     * MessageConverter
+     * jsonMessageConverter
+     * @return MessageConverter
+     */
+    @Bean
+    public MessageConverter converter() {
+        return new Jackson2JsonMessageConverter();
+    }
+
+    /***
+     * ConnectionFactory
+     * RabbitTemplate
+     * amqpTemplate
+     * @param connectionFactory ConnectionFactory
+     * @return AmqpTemplate
+     */
+    @Bean
+    public AmqpTemplate amqpTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(converter());
+        return rabbitTemplate;
+    }
     // RabbitAdmin
 }
