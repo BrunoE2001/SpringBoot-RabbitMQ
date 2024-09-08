@@ -16,6 +16,10 @@ import org.springframework.stereotype.Service;
 public class RabbitMQConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(RabbitMQConsumer.class);
 
+    /***
+     * consume
+     * @param message String
+     */
     @RabbitListener(queues = {"${rabbitmq.queue.name}"})
     private void consume(String message) {
         LOG.info(String.format("Received message: {%s}", message));
