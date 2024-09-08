@@ -28,7 +28,7 @@ public class RabbitMQProducer {
     /**
      * Instantiates a RabbitMQProducer
      */
-    private RabbitTemplate rabbitTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     /**
      * RabbitMQProducer
